@@ -1,0 +1,9 @@
+{
+	"id": "calendar",
+	"name": "Calendar",
+	"version": "0.1.0",
+	"minAppVersion": "1.10.0",
+	"description": "Adds a calendar layout to bases so you can display notes with dates in an interactive calendar view.",
+	"author": "Edrick Leong",
+	"isDesktopOnly": false
+}
