@@ -14,8 +14,6 @@ import { AppContext } from "./context";
 
 export const CalendarViewType = "calendar";
 
-const DEFAULT_CALENDAR_HEIGHT = 600;
-
 interface CalendarEntry {
   entry: BasesEntry;
   startDate: Date;
@@ -55,7 +53,8 @@ export class CalendarView extends BasesView {
   }
 
   onResize(): void {
-    // Calendar auto-adjusts, no special handling needed
+    // TODO: Find a better way to handle resizing
+    this.updateCalendar();
   }
 
   public focus(): void {
@@ -71,48 +70,19 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
-
     this.containerEl.style.height = "";
-  }
-
-  private getNumericConfig(
-    key: string,
-    defaultValue: number,
-    min?: number,
-    max?: number,
-  ): number {
-    const value = this.config.get(key);
-    if (!value || !Number.isNumber(value)) return defaultValue;
-
-    let result = value;
-    if (min !== undefined) result = Math.max(min, result);
-    if (max !== undefined) result = Math.min(max, result);
-    return result;
-  }
-
-  private isEmbedded(): boolean {
-    let element = this.scrollEl.parentElement;
-    while (element) {
-      if (
-        element.hasClass("bases-embed") ||
-        element.hasClass("block-language-base")
-      ) {
-        return true;
-      }
-      element = element.parentElement;
-    }
-    return false;
   }
 
   private updateCalendar(): void {
     if (!this.data || !this.startDateProp) {
+      this.root?.unmount();
+      this.root = null;
       this.containerEl.empty();
       this.containerEl.createDiv("bases-calendar-empty").textContent =
         "Configure a start date property to display entries";
       return;
     }
 
-    // Extract entries with dates
     this.entries = [];
     for (const entry of this.data.data) {
       const startDate = this.extractDate(entry, this.startDateProp);
@@ -128,7 +98,6 @@ export class CalendarView extends BasesView {
       }
     }
 
-    // Render React calendar
     this.renderReactCalendar();
   }
 
@@ -153,15 +122,9 @@ export class CalendarView extends BasesView {
               evt.preventDefault();
               this.showEntryContextMenu(evt.nativeEvent as MouseEvent, entry);
             }}
-            onEntryHover={(evt, entry) => {
-              this.app.workspace.trigger("hover-link", {
-                event: evt.nativeEvent,
-                source: "bases",
-                hoverParent: this.app.renderContext,
-                targetEl: evt.currentTarget,
-                linktext: entry.file.path,
-              });
-            }}
+            onEventDrop={(entry, newStart, newEnd) =>
+              this.updateEntryDates(entry, newStart, newEnd)
+            }
           />
         </AppContext.Provider>
       </StrictMode>,
@@ -201,6 +164,48 @@ export class CalendarView extends BasesView {
         .setWarning(true)
         .onClick(() => this.app.fileManager.promptForDeletion(file)),
     );
+  }
+
+  private async updateEntryDates(
+    entry: BasesEntry,
+    newStart: Date,
+    newEnd?: Date,
+  ): Promise<void> {
+    if (!this.startDateProp) return;
+
+    const file = entry.file;
+    const startPropName = this.startDateProp;
+    const endPropName = this.endDateProp;
+
+    const extractedStartProp = startPropName.startsWith("note.")
+      ? startPropName.slice(5)
+      : null;
+
+    const extractedEndProp = endPropName?.startsWith("note.")
+      ? endPropName.slice(5)
+      : null;
+
+    const shouldUpdate =
+      extractedStartProp !== null &&
+      (!this.endDateProp || extractedEndProp !== null);
+
+    if (!shouldUpdate) {
+      return;
+    }
+
+    await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+      const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+
+      frontmatter[extractedStartProp] = formatDate(newStart);
+      if (this.endDateProp && newEnd && extractedEndProp) {
+        frontmatter[extractedEndProp] = formatDate(newEnd);
+      }
+    });
   }
 
   public setEphemeralState(state: unknown): void {

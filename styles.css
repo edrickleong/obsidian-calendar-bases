@@ -1,282 +1,134 @@
-/* Notion-Style Calendar View */
 body {
-	--calendar-embed-height: 600px;
-	--calendar-border-color: var(--background-modifier-border);
-	--calendar-hover-color: var(--background-modifier-hover);
-	--calendar-selected-color: var(--interactive-accent);
+  --calendar-embed-height: 600px;
+  --calendar-border-color: var(--background-modifier-border);
+  --calendar-hover-color: var(--background-modifier-hover);
+
+  --calendar-selected-color: var(--interactive-accent);
+  --fc-highlight-color: var(--background-modifier-hover);
 }
 
-.bases-view[data-view-type="calendar"] {
-	--bases-embed-border-width: 0px;
-	--bases-view-padding: 0;
-	position: relative;
-}
-
-.workspace-leaf-content[data-type="bases"] .bases-calendar-react {
-	height: 100%;
-}
-
-.bases-calendar-container {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	overflow: auto;
-	background-color: var(--background-primary);
-}
-
-.bases-calendar-container.is-loading {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: var(--calendar-embed-height);
-}
-
-.bases-calendar-container.is-loading::before {
-	content: "Loading calendar...";
-	color: var(--text-muted);
-	font-size: var(--font-ui-medium);
-}
-
-.bases-calendar-react {
-	width: 100%;
-	min-height: var(--calendar-embed-height);
-	display: flex;
-	flex-direction: column;
-	padding: 24px;
-	box-sizing: border-box;
-}
-
-/* Header - Notion style */
-.bases-calendar-header {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin-bottom: 16px;
-	padding: 0 8px;
-}
-
-.bases-calendar-month-display {
-	flex: 1;
-	font-size: 18px;
-	font-weight: 600;
-	color: var(--text-normal);
-	text-align: left;
-}
-
-.bases-calendar-nav-button {
-	width: 28px;
-	height: 28px;
-	padding: 0;
-	border: none;
-	border-radius: 3px;
-	background-color: transparent;
-	color: var(--text-muted);
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: background-color 0.1s ease;
-}
-
-.bases-calendar-nav-button:hover {
-	background-color: var(--calendar-hover-color);
-	color: var(--text-normal);
-}
-
-.bases-calendar-nav-button svg {
-	width: 16px;
-	height: 16px;
-}
-
-.bases-calendar-today-button {
-	padding: 4px 12px;
-	border: none;
-	border-radius: 3px;
-	background-color: transparent;
-	color: var(--text-muted);
-	font-size: var(--font-ui-small);
-	font-weight: 500;
-	cursor: pointer;
-	transition: background-color 0.1s ease;
-}
-
-.bases-calendar-today-button:hover {
-	background-color: var(--calendar-hover-color);
-	color: var(--text-normal);
-}
-
-/* Calendar Grid - Notion style */
-.bases-calendar-grid {
-	display: grid;
-	grid-template-columns: repeat(7, 1fr);
-	gap: 2px;
-	background-color: var(--calendar-border-color);
-	border: 1px solid var(--calendar-border-color);
-	border-radius: 4px;
-	overflow: hidden;
-}
-
-/* Day Headers - Notion style */
-.bases-calendar-day-header {
-	text-align: center;
-	font-size: 11px;
-	font-weight: 500;
-	color: var(--text-muted);
-	padding: 10px 8px;
-	background-color: var(--background-secondary);
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
-/* Day Cells - Notion style */
-.bases-calendar-day {
-	min-height: 100px;
-	background-color: var(--background-primary);
-	padding: 6px;
-	cursor: pointer;
-	transition: background-color 0.1s ease;
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	position: relative;
-}
-
-.bases-calendar-day:hover {
-	background-color: var(--calendar-hover-color);
-}
-
-.bases-calendar-day.is-today {
-	background-color: rgba(var(--interactive-accent-rgb), 0.05);
-}
-
-.bases-calendar-day.is-today .bases-calendar-day-number {
-	color: var(--calendar-selected-color);
-	font-weight: 600;
-}
-
-.bases-calendar-day.is-selected {
-	background-color: rgba(var(--interactive-accent-rgb), 0.1);
-	box-shadow: inset 0 0 0 1px var(--calendar-selected-color);
-}
-
-.bases-calendar-day-empty {
-	background-color: var(--background-secondary-alt);
-	cursor: default;
-}
-
-.bases-calendar-day-empty:hover {
-	background-color: var(--background-secondary-alt);
-}
-
-/* Day Number - Notion style */
-.bases-calendar-day-number {
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--text-muted);
-	text-align: right;
-	padding: 2px 4px;
-	line-height: 1;
-}
-
-/* Entries Container */
-.bases-calendar-day-entries {
-	display: flex;
-	flex-direction: column;
-	gap: 3px;
-	overflow: hidden;
-}
-
-/* Entry Pills - Notion style */
-.bases-calendar-entry {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-	padding: 3px 6px;
-	border-radius: 3px;
-	font-size: 11px;
-	font-weight: 500;
-	cursor: pointer;
-	transition: opacity 0.1s ease, transform 0.1s ease;
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-.bases-calendar-entry:hover {
-	opacity: 0.9;
-	transform: translateY(-1px);
-}
-
-.bases-calendar-entry-dot {
-	display: none; /* Hide dots in Notion style */
-}
-
-.bases-calendar-entry-title {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	flex: 1;
-}
-
-/* More Indicator - Notion style */
-.bases-calendar-more {
-	font-size: 10px;
-	color: var(--text-muted);
-	padding: 2px 6px;
-	text-align: left;
-	font-weight: 500;
-}
-
-/* Empty State */
 .bases-calendar-empty {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 400px;
-	color: var(--text-muted);
-	font-size: var(--font-ui-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-medium);
 }
 
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-	.bases-calendar-react {
-		padding: 16px;
-	}
-	
-	.bases-calendar-day {
-		min-height: 80px;
-	}
+.fc {
+  font-family: var(--font-interface);
 }
 
-@media (max-width: 768px) {
-	.bases-calendar-react {
-		padding: 12px;
-	}
-	
-	.bases-calendar-header {
-		margin-bottom: 12px;
-	}
-	
-	.bases-calendar-month-display {
-		font-size: 16px;
-	}
-	
-	.bases-calendar-day {
-		min-height: 60px;
-		padding: 4px;
-	}
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: var(--background-modifier-border);
+}
 
-	.bases-calendar-day-number {
-		font-size: 11px;
-	}
+.fc-header-toolbar {
+  margin-bottom: 0px !important;
+  padding: 8px !important;
+}
 
-	.bases-calendar-entry {
-		padding: 2px 4px;
-		font-size: 10px;
-	}
-	
-	.bases-calendar-day-header {
-		font-size: 10px;
-		padding: 8px 4px;
-	}
+.fc-toolbar-title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: var(--text-normal) !important;
+}
+
+.fc-button-group {
+  gap: var(--size-2-2);
+}
+
+.fc .fc-button {
+  background-color: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  padding: 4px 6px !important;
+  border-radius: var(--button-radius) !important;
+  font-size: var(--font-ui-small) !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--background-modifier-hover) !important;
+      color: var(--text-normal) !important ;
+    }
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 var(--input-border-width-focus)
+      var(--background-modifier-border-focus) !important;
+  }
+}
+
+.fc-col-header-cell {
+  background-color: var(--background-secondary) !important;
+  padding: 10px 0px !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+a.fc-col-header-cell-cushion {
+  color: var(--text-muted) !important;
+  cursor: default !important;
+  text-decoration: none !important;
+}
+
+.fc-daygrid-day {
+  background-color: var(--background-primary) !important;
+  /* transition: background-color 0.1s ease; */
+}
+
+.fc-highlight {
+  background-color: var(--interactive-accent) !important;
+  opacity: 0.3 !important;
+}
+
+.fc-daygrid-day-number {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--text-muted) !important;
+  padding: 2px 4px !important;
+}
+
+a.fc-daygrid-day-number {
+  cursor: default !important;
+  text-decoration: none !important;
+}
+
+.fc-day-today {
+  .fc-daygrid-day-number {
+    color: var(--text-on-accent) !important;
+    background-color: var(--interactive-accent) !important;
+    border-radius: 4px !important;
+    padding: 0px 4px !important;
+    margin: 2px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.fc-event {
+  background-color: var(--interactive-accent) !important;
+  border: none !important;
+  color: var(--text-on-accent) !important;
+  border-radius: 3px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  margin-bottom: 2px !important;
+}
+
+.fc-scroll-harness {
+  padding: 0px !important;
+}
+
+.bases-calendar-entry-content {
+  overflow: hidden;
+  white-space: nowrap;
 }

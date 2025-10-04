@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-calendar",
+	"name": "calendar-bases",
 	"version": "0.1.0",
 	"description": "Adds calendar view to Obsidian Bases.",
 	"main": "main.js",
@@ -29,6 +29,10 @@
 		"typescript": "5.9.3"
 	},
 	"dependencies": {
+		"@fullcalendar/core": "^6.1.19",
+		"@fullcalendar/daygrid": "^6.1.19",
+		"@fullcalendar/interaction": "^6.1.19",
+		"@fullcalendar/react": "^6.1.19",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0"
 	}
