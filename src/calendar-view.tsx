@@ -30,6 +30,7 @@ export class CalendarView extends BasesView {
   private entries: CalendarEntry[] = [];
   private startDateProp: BasesPropertyId | null = null;
   private endDateProp: BasesPropertyId | null = null;
+  private weekStartDay: number = 1;
 
   constructor(controller: QueryController, scrollEl: HTMLElement) {
     super(controller);
@@ -70,6 +71,10 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
+    const weekStartDayValue = this.config.get("weekStartDay");
+    this.weekStartDay = weekStartDayValue
+      ? parseInt(weekStartDayValue as string)
+      : 1;
   }
 
   private updateCalendar(): void {
@@ -110,6 +115,7 @@ export class CalendarView extends BasesView {
         <AppContext.Provider value={this.app}>
           <CalendarReactView
             entries={this.entries}
+            weekStartDay={this.weekStartDay}
             onEntryClick={(entry, isModEvent) => {
               void this.app.workspace.openLinkText(
                 entry.file.path,
@@ -234,6 +240,27 @@ export class CalendarView extends BasesView {
             key: "endDate",
             filter: (prop) => !prop.startsWith("file."),
             placeholder: "Property",
+          },
+        ],
+      },
+      {
+        displayName: "Calendar options",
+        type: "group",
+        items: [
+          {
+            displayName: "Week starts on",
+            type: "dropdown",
+            key: "weekStartDay",
+            default: "1",
+            options: {
+              "0": "Sunday",
+              "1": "Monday",
+              "2": "Tuesday",
+              "3": "Wednesday",
+              "4": "Thursday",
+              "5": "Friday",
+              "6": "Saturday",
+            },
           },
         ],
       },
