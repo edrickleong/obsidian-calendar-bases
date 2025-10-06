@@ -104,7 +104,7 @@ body {
 
   .fc-day-today {
     .fc-daygrid-day-number {
-      color: var(--text-normal) !important;
+      color: var(--text-on-accent) !important;
       background-color: var(--interactive-accent) !important;
       border-radius: 4px !important;
       padding: 0px 4px !important;
