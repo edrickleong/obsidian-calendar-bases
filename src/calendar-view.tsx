@@ -71,10 +71,21 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
-    const weekStartDayValue = this.config.get("weekStartDay");
+    const weekStartDayValue = this.config.get("weekStartDay") as string;
+
+    const dayNameToNumber: Record<string, number> = {
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+    };
+
     this.weekStartDay = weekStartDayValue
-      ? parseInt(weekStartDayValue as string)
-      : 1;
+      ? (dayNameToNumber[weekStartDayValue] ?? 1)
+      : 1; // Default to Monday
   }
 
   private updateCalendar(): void {
@@ -251,15 +262,15 @@ export class CalendarView extends BasesView {
             displayName: "Week starts on",
             type: "dropdown",
             key: "weekStartDay",
-            default: "1",
+            default: "monday",
             options: {
-              "0": "Sunday",
-              "1": "Monday",
-              "2": "Tuesday",
-              "3": "Wednesday",
-              "4": "Thursday",
-              "5": "Friday",
-              "6": "Saturday",
+              sunday: "Sunday",
+              monday: "Monday",
+              tuesday: "Tuesday",
+              wednesday: "Wednesday",
+              thursday: "Thursday",
+              friday: "Friday",
+              saturday: "Saturday",
             },
           },
         ],
