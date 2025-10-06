@@ -70,7 +70,6 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
-    this.containerEl.style.height = "";
   }
 
   private updateCalendar(): void {
