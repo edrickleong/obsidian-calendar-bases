@@ -28,16 +28,45 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   const app = useApp();
   const calendarRef = useRef<FullCalendar>(null);
 
-  const events = entries.map((calEntry) => ({
-    id: calEntry.entry.file.path,
-    title: calEntry.entry.file.basename,
-    start: calEntry.startDate,
-    end: calEntry.endDate,
-    allDay: true,
-    extendedProps: {
-      entry: calEntry.entry,
-    },
-  }));
+  const events = entries.map((calEntry) => {
+    // FullCalendar treats end dates as exclusive when allDay is true
+    // We need to add one day to the end date to make it inclusive
+    // But if start and end are the same day, we don't set an end date (single day event)
+    let adjustedEndDate = calEntry.endDate;
+    if (calEntry.endDate) {
+      const startDateOnly = new Date(
+        calEntry.startDate.getFullYear(),
+        calEntry.startDate.getMonth(),
+        calEntry.startDate.getDate(),
+      );
+      const endDateOnly = new Date(
+        calEntry.endDate.getFullYear(),
+        calEntry.endDate.getMonth(),
+        calEntry.endDate.getDate(),
+      );
+
+      if (startDateOnly.getTime() === endDateOnly.getTime()) {
+        // Same day event - don't set end date to avoid showing as multi-day
+        adjustedEndDate = undefined;
+      } else {
+        // Multi-day event - add one day to make end date inclusive
+        adjustedEndDate = new Date(calEntry.endDate);
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+      }
+    }
+
+    return {
+      id: calEntry.entry.file.path,
+      title: calEntry.entry.file.basename,
+      start: calEntry.startDate,
+      end: adjustedEndDate,
+      allDay: true,
+      extendedProps: {
+        entry: calEntry.entry,
+        originalEndDate: calEntry.endDate, // Keep track of original end date for drag operations
+      },
+    };
+  });
 
   const handleEventClick = useCallback(
     (clickInfo: EventClickArg) => {
@@ -91,6 +120,9 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       }
 
       const entry = dropInfo.event.extendedProps.entry as BasesEntry;
+      const originalEndDate = dropInfo.event.extendedProps.originalEndDate as
+        | Date
+        | undefined;
       const newStart = dropInfo.event.start;
       const newEnd = dropInfo.event.end;
 
@@ -99,8 +131,21 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         return;
       }
 
+      // Calculate the actual end date to save
+      let actualEndDate: Date | undefined = undefined;
+      if (originalEndDate) {
+        if (newEnd) {
+          // FullCalendar gave us an adjusted end date, we need to subtract one day to get the actual end date
+          actualEndDate = new Date(newEnd);
+          actualEndDate.setDate(actualEndDate.getDate() - 1);
+        } else {
+          // Single day event - use the start date as the end date
+          actualEndDate = new Date(newStart);
+        }
+      }
+
       try {
-        await onEventDrop(entry, newStart, newEnd ?? undefined);
+        await onEventDrop(entry, newStart, actualEndDate);
       } catch (error) {
         dropInfo.revert();
       }
