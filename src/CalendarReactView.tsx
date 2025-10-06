@@ -8,6 +8,7 @@ import { useApp } from "./hooks";
 
 interface CalendarReactViewProps {
   entries: CalendarEntry[];
+  weekStartDay: number;
   onEntryClick: (entry: BasesEntry, isModEvent: boolean) => void;
   onEntryContextMenu: (evt: React.MouseEvent, entry: BasesEntry) => void;
   onEventDrop?: (
@@ -19,6 +20,7 @@ interface CalendarReactViewProps {
 
 export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   entries,
+  weekStartDay,
   onEntryClick,
   onEntryContextMenu,
   onEventDrop,
@@ -111,6 +113,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       ref={calendarRef}
       plugins={[dayGridPlugin, interactionPlugin]}
       initialView="dayGridMonth"
+      firstDay={weekStartDay}
       headerToolbar={{
         left: "",
         center: "title",
