@@ -132,31 +132,16 @@ body {
   }
 }
 
-.bases-calendar-entry-content {
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-/* Custom event content styles inspired by map view popups */
 .bases-calendar-event-content {
   padding: 4px 6px;
   font-size: var(--font-ui-smaller);
-  line-height: 1.3;
+  color: var(--text-normal);
   overflow: hidden;
 }
 
 .bases-calendar-event-title {
   font-weight: var(--font-semibold);
-  color: var(--text-on-accent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   margin-bottom: 4px;
-}
-
-.bases-calendar-event-title a {
-  color: var(--text-on-accent);
-  text-decoration: none;
 }
 
 .bases-calendar-event-properties {
@@ -167,16 +152,6 @@ body {
 .bases-calendar-event-property {
   display: flex;
   flex-direction: column;
-  font-size: var(--font-ui-smaller);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-on-accent);
-  opacity: 0.9;
   cursor: default;
   padding: 2px 0px;
-}
-
-.bases-calendar-event-property-value {
-  opacity: 0.95;
 }
