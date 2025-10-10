@@ -16,6 +16,7 @@ interface CalendarReactViewProps {
     newStart: Date,
     newEnd?: Date,
   ) => Promise<void>;
+  editable: boolean;
 }
 
 export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
@@ -24,6 +25,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   onEntryClick,
   onEntryContextMenu,
   onEventDrop,
+  editable,
 }) => {
   const app = useApp();
   const calendarRef = useRef<FullCalendar>(null);
@@ -176,7 +178,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       fixedWeekCount={true}
       fixedMirrorParent={document.body ?? undefined}
       eventDurationEditable={false}
-      editable={true}
+      editable={editable}
     />
   );
 };
