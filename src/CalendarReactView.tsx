@@ -1,14 +1,19 @@
-import type { EventClickArg, EventDropArg } from "@fullcalendar/core";
+import type {
+  EventClickArg,
+  EventContentArg,
+  EventDropArg,
+} from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
-import { BasesEntry, BasesPropertyId } from "obsidian";
+import { BasesEntry, BasesPropertyId, DateValue, Value } from "obsidian";
 import React, { useCallback, useRef } from "react";
 import { useApp } from "./hooks";
 
 interface CalendarReactViewProps {
   entries: CalendarEntry[];
   weekStartDay: number;
+  properties: BasesPropertyId[];
   onEntryClick: (entry: BasesEntry, isModEvent: boolean) => void;
   onEntryContextMenu: (evt: React.MouseEvent, entry: BasesEntry) => void;
   onEventDrop?: (
@@ -22,6 +27,7 @@ interface CalendarReactViewProps {
 export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   entries,
   weekStartDay,
+  properties,
   onEntryClick,
   onEntryContextMenu,
   onEventDrop,
@@ -155,6 +161,112 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
     [onEventDrop],
   );
 
+  const hasNonEmptyValue = useCallback((value: any): boolean => {
+    if (!value || !value.isTruthy()) return false;
+    const str = value.toString();
+    return str && str.trim().length > 0;
+  }, []);
+
+  const PropertyValue: React.FC<{ value: Value }> = ({ value }) => {
+    const elementRef = useCallback(
+      (node: HTMLElement | null) => {
+        if (node && app) {
+          // Remove previous content (due to React strict mode causing double calls)
+          while (node.firstChild) {
+            node.removeChild(node.firstChild);
+          }
+
+          if (!(value instanceof DateValue)) {
+            value.renderTo(node, app.renderContext);
+            return;
+          }
+
+          // Special handling for DateValue to show in a more compact format
+          if ("date" in value && value.date && value.date instanceof Date) {
+            if ("time" in value && value.time) {
+              node.appendChild(
+                document.createTextNode(
+                  value.date.toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                ),
+              );
+            } else {
+              node.appendChild(
+                document.createTextNode(
+                  value.date.toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  }),
+                ),
+              );
+            }
+
+            return;
+          }
+        }
+      },
+      [value],
+    );
+
+    return <span ref={elementRef} />;
+  };
+
+  const renderEventContent = useCallback(
+    (eventInfo: EventContentArg) => {
+      if (!app) return null;
+
+      const entry = eventInfo.event.extendedProps.entry as BasesEntry;
+      const validProperties: { propertyId: BasesPropertyId; value: Value }[] =
+        [];
+      for (const prop of properties) {
+        const value = tryGetValue(entry, prop);
+        if (value && hasNonEmptyValue(value)) {
+          validProperties.push({ propertyId: prop, value });
+        }
+      }
+
+      if (validProperties.length > 0) {
+        const firstProperty = validProperties[0];
+        const remainingProperties = validProperties.slice(1);
+
+        return (
+          <div className="bases-calendar-event-content">
+            <div className="bases-calendar-event-title">
+              <PropertyValue value={firstProperty.value} />
+            </div>
+            {remainingProperties.length > 0 && (
+              <div className="bases-calendar-event-properties">
+                {remainingProperties.map(({ propertyId: prop, value }) => (
+                  <div key={prop} className="bases-calendar-event-property">
+                    <span className="bases-calendar-event-property-value">
+                      <PropertyValue value={value} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      } else {
+        // Fallback to file basename if no properties
+        return (
+          <div className="bases-calendar-event-content">
+            <div className="bases-calendar-event-title">
+              {entry.file.basename}
+            </div>
+          </div>
+        );
+      }
+    },
+    [properties, app, hasNonEmptyValue],
+  );
+
   return (
     <FullCalendar
       ref={calendarRef}
@@ -171,6 +283,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       }}
       navLinks={false}
       events={events}
+      eventContent={renderEventContent}
       eventClick={handleEventClick}
       eventMouseEnter={handleEventMouseEnter}
       eventDrop={handleEventDrop}
@@ -187,4 +300,12 @@ interface CalendarEntry {
   entry: BasesEntry;
   startDate: Date;
   endDate?: Date;
+}
+
+function tryGetValue(entry: BasesEntry, propId: BasesPropertyId): Value | null {
+  try {
+    return entry.getValue(propId);
+  } catch {
+    return null;
+  }
 }

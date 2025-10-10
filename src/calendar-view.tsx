@@ -128,6 +128,7 @@ export class CalendarView extends BasesView {
           <CalendarReactView
             entries={this.entries}
             weekStartDay={this.weekStartDay}
+            properties={this.config.getOrder() || []}
             onEntryClick={(entry, isModEvent) => {
               void this.app.workspace.openLinkText(
                 entry.file.path,
