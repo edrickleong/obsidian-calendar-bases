@@ -2,13 +2,14 @@ import {
   BasesEntry,
   BasesPropertyId,
   BasesView,
-  Keymap,
+  DateValue,
   Menu,
+  parsePropertyId,
   QueryController,
   ViewOption,
 } from "obsidian";
 import { StrictMode } from "react";
-import { Root, createRoot } from "react-dom/client";
+import { createRoot, Root } from "react-dom/client";
 import { CalendarReactView } from "./CalendarReactView";
 import { AppContext } from "./context";
 
@@ -141,25 +142,36 @@ export class CalendarView extends BasesView {
             onEventDrop={(entry, newStart, newEnd) =>
               this.updateEntryDates(entry, newStart, newEnd)
             }
+            editable={this.isEditable()}
           />
         </AppContext.Provider>
       </StrictMode>,
     );
   }
 
+  private isEditable(): boolean {
+    if (!this.startDateProp) return false;
+    const startDateProperty = parsePropertyId(this.startDateProp);
+    if (startDateProperty.type !== "note") return false;
+
+    if (!this.endDateProp) return false;
+    const endDateProperty = parsePropertyId(this.endDateProp);
+    if (endDateProperty.type !== "note") return false;
+
+    return true;
+  }
+
   private extractDate(entry: BasesEntry, propId: BasesPropertyId): Date | null {
     try {
       const value = entry.getValue(propId);
       if (!value) return null;
+      if (!(value instanceof DateValue)) return null;
+      // Private API
+      if ("date" in value && value.date && value.date instanceof Date) {
+        return value.date;
+      }
 
-      const dateString = value.toString().trim();
-      if (!dateString) return null;
-
-      // Parse various date formats
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return null;
-
-      return date;
+      return null;
     } catch (error) {
       console.error(`Error extracting date for ${entry.file.name}:`, error);
       return null;
@@ -242,14 +254,12 @@ export class CalendarView extends BasesView {
             displayName: "Start date",
             type: "property",
             key: "startDate",
-            filter: (prop) => !prop.startsWith("file."),
             placeholder: "Property",
           },
           {
             displayName: "End date (optional)",
             type: "property",
             key: "endDate",
-            filter: (prop) => !prop.startsWith("file."),
             placeholder: "Property",
           },
         ],
