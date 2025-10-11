@@ -155,7 +155,7 @@ export class CalendarView extends BasesView {
     const startDateProperty = parsePropertyId(this.startDateProp);
     if (startDateProperty.type !== "note") return false;
 
-    if (!this.endDateProp) return false;
+    if (!this.endDateProp) return true;
     const endDateProperty = parsePropertyId(this.endDateProp);
     if (endDateProperty.type !== "note") return false;
 
