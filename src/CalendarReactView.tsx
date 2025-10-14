@@ -14,6 +14,7 @@ interface CalendarReactViewProps {
   entries: CalendarEntry[];
   weekStartDay: number;
   properties: BasesPropertyId[];
+  imageProperty?: BasesPropertyId;
   onEntryClick: (entry: BasesEntry, isModEvent: boolean) => void;
   onEntryContextMenu: (evt: React.MouseEvent, entry: BasesEntry) => void;
   onEventDrop?: (
@@ -28,6 +29,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   entries,
   weekStartDay,
   properties,
+  imageProperty,
   onEntryClick,
   onEntryContextMenu,
   onEventDrop,
@@ -231,12 +233,24 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         }
       }
 
+      // Get image path if image property is configured
+      const imagePath = getImagePath(entry, imageProperty);
+
       if (validProperties.length > 0) {
         const firstProperty = validProperties[0];
         const remainingProperties = validProperties.slice(1);
 
         return (
           <div className="bases-calendar-event-content">
+            {imagePath && (
+              <div className="bases-calendar-event-image">
+                <img
+                  src={app.vault.adapter.getResourcePath(imagePath)}
+                  alt=""
+                  loading="lazy"
+                />
+              </div>
+            )}
             <div className="bases-calendar-event-title">
               <PropertyValue value={firstProperty.value} />
             </div>
@@ -257,6 +271,15 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         // Fallback to file basename if no properties
         return (
           <div className="bases-calendar-event-content">
+            {imagePath && (
+              <div className="bases-calendar-event-image">
+                <img
+                  src={app.vault.adapter.getResourcePath(imagePath)}
+                  alt=""
+                  loading="lazy"
+                />
+              </div>
+            )}
             <div className="bases-calendar-event-title">
               {entry.file.basename}
             </div>
@@ -264,7 +287,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         );
       }
     },
-    [properties, app, hasNonEmptyValue],
+    [properties, app, hasNonEmptyValue, imageProperty],
   );
 
   return (
@@ -305,6 +328,37 @@ interface CalendarEntry {
 function tryGetValue(entry: BasesEntry, propId: BasesPropertyId): Value | null {
   try {
     return entry.getValue(propId);
+  } catch {
+    return null;
+  }
+}
+
+function getImagePath(entry: BasesEntry, imageProp: BasesPropertyId | undefined): string | null {
+  if (!imageProp) return null;
+  
+  try {
+    const value = entry.getValue(imageProp);
+    if (!value) return null;
+    
+    // Convert value to string to get the image path
+    const valueStr = value.toString().trim();
+    if (!valueStr) return null;
+    
+    // Handle wiki-link format [[image.png]] or markdown format ![](image.png)
+    let imagePath = valueStr;
+    
+    // Remove wiki-link brackets if present
+    if (imagePath.startsWith("[[") && imagePath.endsWith("]]")) {
+      imagePath = imagePath.slice(2, -2);
+    }
+    
+    // Extract path from markdown image syntax
+    const markdownMatch = imagePath.match(/!\[.*?\]\((.*?)\)/);
+    if (markdownMatch) {
+      imagePath = markdownMatch[1];
+    }
+    
+    return imagePath;
   } catch {
     return null;
   }

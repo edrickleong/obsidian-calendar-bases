@@ -139,6 +139,21 @@ body {
   overflow: hidden;
 }
 
+.bases-calendar-event-image {
+  width: 100%;
+  margin-bottom: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  max-height: 120px;
+}
+
+.bases-calendar-event-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .bases-calendar-event-title {
   font-weight: var(--font-semibold);
   margin-bottom: 4px;
