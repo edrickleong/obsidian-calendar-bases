@@ -10,6 +10,7 @@ Built with [FullCalendar](https://github.com/fullcalendar/fullcalendar) for a ro
 - Drag and drop events to reschedule them - automatically updates note frontmatter.
 - Navigate between months with intuitive controls.
 - Support for single-day and multi-day events (with optional end dates).
+- Customize event colors based on note properties.
 - Click entries to open them or use context menus for more options.
 
 ## Installation
@@ -46,6 +47,24 @@ endDate: 2025-10-18
 ```
 
 Any JavaScript-parseable date format is supported. For multi-day events, configure both a start date and an optional end date property.
+
+### Color Property
+
+You can customize the color of calendar events based on a property in your notes. In the view configuration menu, select a property that contains color values.
+
+```yaml
+# Color property examples
+color: red
+color: #FF5733
+color: #F00
+color: #FF5733AA
+```
+
+Supported color formats:
+- **CSS color names**: Any valid CSS color name (e.g., `red`, `blue`, `green`)
+- **Hex colors**: 3, 6, or 8-digit hex codes (e.g., `#F00`, `#FF5733`, `#FF5733AA`)
+
+If no color property is configured, or if a note doesn't have a color value, the default calendar event color will be used.
 
 ## Credits
 

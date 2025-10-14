@@ -19,6 +19,7 @@ interface CalendarEntry {
   entry: BasesEntry;
   startDate: Date;
   endDate?: Date;
+  color?: string;
 }
 
 export class CalendarView extends BasesView {
@@ -31,7 +32,8 @@ export class CalendarView extends BasesView {
   private entries: CalendarEntry[] = [];
   private startDateProp: BasesPropertyId | null = null;
   private endDateProp: BasesPropertyId | null = null;
-  private weekStartDay: number = 1;
+  private colorProp: BasesPropertyId | null = null;
+  private weekStartDay = 1;
 
   constructor(controller: QueryController, scrollEl: HTMLElement) {
     super(controller);
@@ -72,6 +74,7 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
+    this.colorProp = this.config.getAsPropertyId("colorProperty");
     const weekStartDayValue = this.config.get("weekStartDay") as string;
 
     const dayNameToNumber: Record<string, number> = {
@@ -106,10 +109,14 @@ export class CalendarView extends BasesView {
         const endDate = this.endDateProp
           ? (this.extractDate(entry, this.endDateProp) ?? undefined)
           : undefined;
+        const color = this.colorProp
+          ? (this.extractColor(entry, this.colorProp) ?? undefined)
+          : undefined;
         this.entries.push({
           entry,
           startDate,
           endDate,
+          color,
         });
       }
     }
@@ -175,6 +182,31 @@ export class CalendarView extends BasesView {
       return null;
     } catch (error) {
       console.error(`Error extracting date for ${entry.file.name}:`, error);
+      return null;
+    }
+  }
+
+  private extractColor(entry: BasesEntry, propId: BasesPropertyId): string | null {
+    try {
+      const value = entry.getValue(propId);
+      if (!value) return null;
+      
+      // Convert the value to string
+      const colorStr = value.toString().trim();
+      if (!colorStr) return null;
+
+      // Validate color format (hex or CSS color name)
+      // Accept hex colors (#RGB, #RRGGBB, #RRGGBBAA) and CSS color names
+      const isValidHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(colorStr);
+      const isValidCssColor = /^[a-z]+$/i.test(colorStr);
+      
+      if (isValidHex || isValidCssColor) {
+        return colorStr;
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`Error extracting color for ${entry.file.name}:`, error);
       return null;
     }
   }
@@ -261,6 +293,12 @@ export class CalendarView extends BasesView {
             displayName: "End date (optional)",
             type: "property",
             key: "endDate",
+            placeholder: "Property",
+          },
+          {
+            displayName: "Color property (optional)",
+            type: "property",
+            key: "colorProperty",
             placeholder: "Property",
           },
         ],
