@@ -10,6 +10,7 @@ Built with [FullCalendar](https://github.com/fullcalendar/fullcalendar) for a ro
 - Drag and drop events to reschedule them - automatically updates note frontmatter.
 - Navigate between months with intuitive controls.
 - Support for single-day and multi-day events (with optional end dates).
+- Display images in calendar events from note properties (similar to Card view).
 - Click entries to open them or use context menus for more options.
 
 ## Installation
@@ -46,6 +47,29 @@ endDate: 2025-10-18
 ```
 
 Any JavaScript-parseable date format is supported. For multi-day events, configure both a start date and an optional end date property.
+
+### Image Support
+
+Calendar events can display images from a property in your notes, similar to the Card view in Obsidian Bases.
+
+To enable image support:
+
+1. Add an image property to your notes' frontmatter
+2. In the Calendar view options, select the image property from the "Image property (optional)" dropdown
+
+```yaml
+---
+startDate: 2025-10-15
+cover: "images/photo.jpg"
+---
+```
+
+**Supported image reference formats:**
+- Plain path: `cover: "images/photo.jpg"`
+- Wiki-link: `cover: "[[images/photo.jpg]]"`
+- Markdown: `cover: "![](images/photo.jpg)"`
+
+Images are displayed above the event title and are lazy-loaded for optimal performance.
 
 ## Credits
 
