@@ -26,6 +26,14 @@ body {
     border-color: var(--background-modifier-border);
   }
 
+  .fc .fc-scrollgrid-section-header.fc-scrollgrid-section-sticky > * {
+    background-color: var(--background-primary);
+  }
+
+  .fc .fc-scrollgrid {
+    border-width: 0px;
+  }
+
   .fc-header-toolbar {
     margin-bottom: 0px !important;
     padding: 8px !important;
