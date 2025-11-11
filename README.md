@@ -16,8 +16,6 @@ Built with [FullCalendar](https://github.com/fullcalendar/fullcalendar) for a ro
 
 This plugin currently required Obsidian v1.10.0 or later to work.
 
-Obsidian v1.10.0 is currently in [Early Access](https://help.obsidian.md/early-access), so you will need a [Catalyst license](https://help.obsidian.md/catalyst) to use it.
-
 ### Install via BRAT
 
 1. Install the [BRAT plugin](obsidian://show-plugin?id=obsidian42-brat) under Community Plugins.
