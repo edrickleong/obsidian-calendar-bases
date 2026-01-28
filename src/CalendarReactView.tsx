@@ -1,4 +1,5 @@
 import type {
+  EventApi,
   EventClickArg,
   EventContentArg,
   EventDropArg,
@@ -87,7 +88,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   );
 
   const handleEventMouseEnter = useCallback(
-    (mouseEnterInfo: { event: any; el: HTMLElement; jsEvent: MouseEvent }) => {
+    (mouseEnterInfo: { event: EventApi; el: HTMLElement; jsEvent: MouseEvent }) => {
       const entry = mouseEnterInfo.event.extendedProps.entry as BasesEntry;
 
       if (app) {
@@ -154,17 +155,17 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
 
       try {
         await onEventDrop(entry, newStart, actualEndDate);
-      } catch (error) {
+      } catch {
         dropInfo.revert();
       }
     },
     [onEventDrop],
   );
 
-  const hasNonEmptyValue = useCallback((value: any): boolean => {
+  const hasNonEmptyValue = useCallback((value: Value): boolean => {
     if (!value || !value.isTruthy()) return false;
     const str = value.toString();
-    return str && str.trim().length > 0;
+    return Boolean(str && str.trim().length > 0);
   }, []);
 
   const PropertyValue: React.FC<{ value: Value }> = ({ value }) => {
@@ -286,7 +287,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       eventContent={renderEventContent}
       eventClick={handleEventClick}
       eventMouseEnter={handleEventMouseEnter}
-      eventDrop={handleEventDrop}
+      eventDrop={(info) => void handleEventDrop(info)}
       height="auto"
       fixedWeekCount={true}
       fixedMirrorParent={document.body ?? undefined}

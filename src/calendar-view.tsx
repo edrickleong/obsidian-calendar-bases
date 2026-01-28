@@ -138,7 +138,7 @@ export class CalendarView extends BasesView {
             }}
             onEntryContextMenu={(evt, entry) => {
               evt.preventDefault();
-              this.showEntryContextMenu(evt.nativeEvent as MouseEvent, entry);
+              this.showEntryContextMenu(evt.nativeEvent, entry);
             }}
             onEventDrop={(entry, newStart, newEnd) =>
               this.updateEntryDates(entry, newStart, newEnd)
