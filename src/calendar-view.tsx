@@ -1,4 +1,5 @@
 import {
+  BasesAllOptions,
   BasesEntry,
   BasesPropertyId,
   BasesView,
@@ -6,7 +7,6 @@ import {
   Menu,
   parsePropertyId,
   QueryController,
-  ViewOption,
 } from "obsidian";
 import { StrictMode } from "react";
 import { createRoot, Root } from "react-dom/client";
@@ -245,7 +245,7 @@ export class CalendarView extends BasesView {
     return {};
   }
 
-  static getViewOptions(): ViewOption[] {
+  static getViewOptions(): BasesAllOptions[] {
     return [
       {
         displayName: "Date properties",

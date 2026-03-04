@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import { copyFileSync, existsSync } from "fs";
+import { join } from "path";
 
 const banner =
 `/*
@@ -10,6 +12,25 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === "production");
+
+const testVaultPluginDir = join("test-vault", ".obsidian", "plugins", "calendar-bases");
+
+// Plugin to copy build artifacts to test vault
+const copyToTestVault = {
+	name: "copy-to-test-vault",
+	setup(build) {
+		build.onEnd(() => {
+			if (prod || !existsSync(testVaultPluginDir)) return;
+			const filesToCopy = ["main.js", "manifest.json", "styles.css"];
+			for (const file of filesToCopy) {
+				if (existsSync(file)) {
+					copyFileSync(file, join(testVaultPluginDir, file));
+				}
+			}
+			console.log("Copied build artifacts to test vault");
+		});
+	},
+};
 
 const context = await esbuild.context({
 	banner: {
@@ -39,6 +60,7 @@ const context = await esbuild.context({
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	plugins: prod ? [] : [copyToTestVault],
 });
 
 if (prod) {

@@ -1,0 +1,22 @@
+filters:
+  and:
+    - file.hasTag("event")
+
+views:
+  - type: calendar
+    name: "Calendar"
+    order:
+      - file.name
+      - date
+      - endDate
+    startDate: note.date
+    endDate: note.endDate
+    weekStartDay: monday
+
+  - type: table
+    name: "Table"
+    order:
+      - file.name
+      - date
+      - endDate
+      - tags

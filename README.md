@@ -1,4 +1,4 @@
-## Obsidian Calendar Bases
+## Calendar Bases
 
 ![](./screenshot.png)
 
@@ -14,9 +14,7 @@ Built with [FullCalendar](https://github.com/fullcalendar/fullcalendar) for a ro
 
 ## Installation
 
-This plugin currently required Obsidian v1.10.0 or later to work.
-
-Obsidian v1.10.0 is currently in [Early Access](https://help.obsidian.md/early-access), so you will need a [Catalyst license](https://help.obsidian.md/catalyst) to use it.
+This plugin requires Obsidian v1.10.0 or later to work.
 
 ### Install via BRAT
 
