@@ -1,4 +1,4 @@
-## Obsidian Calendar Bases
+## Calendar Bases
 
 ![](./screenshot.png)
 
@@ -14,7 +14,11 @@ Built with [FullCalendar](https://github.com/fullcalendar/fullcalendar) for a ro
 
 ## Installation
 
-This plugin currently required Obsidian v1.10.0 or later to work.
+This plugin requires Obsidian v1.10.0 or later to work.
+
+### Install via Community Plugins
+
+Calendar Bases is available under Community Plugins. It can be found [here](obsidian://show-plugin?id=calendar-bases).
 
 ### Install via BRAT
 
@@ -24,9 +28,6 @@ This plugin currently required Obsidian v1.10.0 or later to work.
 4. Under "Select a version", choose the Latest version.
 5. Click "Add plugin".
 
-### Install via Community Plugins
-
-Calendar Bases is not yet available under Community Plugins. It is currently being reviewed and should hopefully be available soon.
 
 ## Documentation
 

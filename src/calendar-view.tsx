@@ -1,4 +1,5 @@
 import {
+  BasesAllOptions,
   BasesEntry,
   BasesPropertyId,
   BasesView,
@@ -6,7 +7,6 @@ import {
   Menu,
   parsePropertyId,
   QueryController,
-  ViewOption,
 } from "obsidian";
 import { StrictMode } from "react";
 import { createRoot, Root } from "react-dom/client";
@@ -138,7 +138,7 @@ export class CalendarView extends BasesView {
             }}
             onEntryContextMenu={(evt, entry) => {
               evt.preventDefault();
-              this.showEntryContextMenu(evt.nativeEvent as MouseEvent, entry);
+              this.showEntryContextMenu(evt.nativeEvent, entry);
             }}
             onEventDrop={(entry, newStart, newEnd) =>
               this.updateEntryDates(entry, newStart, newEnd)
@@ -245,7 +245,7 @@ export class CalendarView extends BasesView {
     return {};
   }
 
-  static getViewOptions(): ViewOption[] {
+  static getViewOptions(): BasesAllOptions[] {
     return [
       {
         displayName: "Date properties",
