@@ -1,6 +1,6 @@
 {
 	"name": "calendar-bases",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Adds a calendar layout to Obsidian Bases.",
 	"main": "main.js",
 	"scripts": {
