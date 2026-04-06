@@ -308,6 +308,13 @@ body {
     ) !important;
   }
 
+  /* Prevent FullCalendar's invisible focus/selected overlay (z-index: 3)
+     from blocking clicks on links inside events */
+  .fc-event:focus::before,
+  .fc-event-selected::before {
+    pointer-events: none;
+  }
+
   .fc-event-title-container {
     color: var(--text-normal) !important;
   }
