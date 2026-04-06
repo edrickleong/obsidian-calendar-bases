@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "agent-browser": {
+      "source": "vercel-labs/agent-browser",
+      "sourceType": "github",
+      "computedHash": "20b7af45ca25014fe0195cd528940b57d5aaa44bac8098843a16e2e9b15af1c9"
+    },
     "obsidian-bases": {
       "source": "kepano/obsidian-skills",
       "sourceType": "github",

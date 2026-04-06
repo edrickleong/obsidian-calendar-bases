@@ -127,8 +127,28 @@ body {
     color: var(--text-normal) !important;
   }
 
-  .fc-scroll-harness {
-    padding: 0px !important;
+  /*
+   * Obsidian's `.markdown-rendered` table styles have higher specificity than
+   * FullCalendar's own resets, which re-applies borders and margins that FC
+   * intentionally zeroes out. We override them here:
+   *
+   * - `.markdown-rendered thead tr > th:first-child` sets border-left-width: 1px,
+   *   overriding FC's `.fc .fc-scrollgrid-section > *` border-left-width: 0,
+   *   causing a double border on the left edge (stacking with the scrollgrid's
+   *   own border-left: 1px).
+   *
+   * - `.markdown-rendered table` adds block margins that shift the calendar grid.
+   */
+  .fc .fc-scrollgrid-section > * {
+    border-left-width: 0 !important;
+  }
+
+  table {
+    margin: 0 !important;
+  }
+
+  td, th {
+    padding: 0 !important;
   }
 }
 
@@ -155,3 +175,4 @@ body {
   cursor: default;
   padding: 2px 0px;
 }
+

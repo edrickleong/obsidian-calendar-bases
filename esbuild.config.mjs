@@ -1,7 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
-import { copyFileSync, existsSync } from "fs";
+import { copyFileSync, existsSync, watch } from "fs";
 import { join } from "path";
 
 const banner =
@@ -68,4 +68,11 @@ if (prod) {
 	process.exit(0);
 } else {
 	await context.watch();
+
+	if (existsSync(testVaultPluginDir)) {
+		watch("styles.css", () => {
+			copyFileSync("styles.css", join(testVaultPluginDir, "styles.css"));
+			console.log("Copied styles.css to test vault");
+		});
+	}
 }

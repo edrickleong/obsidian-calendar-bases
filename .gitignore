@@ -22,4 +22,5 @@ data.json
 .DS_Store
 
 # Exclude Obsidian test vault plugin
-.obsidian/plugins/obsidian-calendar-bases
+test-vault/.obsidian/plugins/calendar-bases
+test-vault/.obsidian/workspace.json

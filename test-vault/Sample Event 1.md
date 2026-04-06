@@ -1,7 +1,8 @@
 ---
 date: 2026-03-04
 endDate: 2026-03-06
-tags: [event]
+tags:
+  - event
 ---
 
 # Sample Event 1
