@@ -1,5 +1,7 @@
 ## Calendar Bases
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W71T4JPP)
+
 ![](./screenshot.png)
 
 Adds a calendar layout to [Obsidian Bases](https://help.obsidian.md/bases) so you can display notes with dates in an interactive calendar view.
