@@ -1,5 +1,8 @@
-	# Embedded Calendar Base
+# Embedded Calendar Base
 ```base
+filters:
+  and:
+    - file.hasTag("event")
 views:
   - type: calendar
     name: Calendar
@@ -7,8 +10,12 @@ views:
       - file.name
       - date
       - endDate
+      - tags
+      - related
+      - url
     startDate: note.date
     endDate: note.endDate
+    weekStartDay: monday
 
 ```
 

@@ -8,8 +8,13 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import { BasesEntry, BasesPropertyId, DateValue, Value } from "obsidian";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
+
 import { useApp } from "./hooks";
+
+export interface CalendarHandle {
+  updateSize(): void;
+}
 
 interface CalendarReactViewProps {
   entries: CalendarEntry[];
@@ -23,6 +28,7 @@ interface CalendarReactViewProps {
     newEnd?: Date,
   ) => Promise<void>;
   editable: boolean;
+  calendarHandleRef?: React.RefObject<CalendarHandle | null>;
 }
 
 export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
@@ -33,9 +39,28 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   onEntryContextMenu,
   onEventDrop,
   editable,
+  calendarHandleRef,
 }) => {
   const app = useApp();
   const calendarRef = useRef<FullCalendar>(null);
+  // Shared hover parent so Page Preview can manage popover lifecycle —
+  // when a new popover opens, the old one on the same parent is dismissed.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hoverParentRef = useRef<{ hoverPopover: any }>({ hoverPopover: null });
+
+  // Expose updateSize to the parent view for resize/tab-switch handling
+  useEffect(() => {
+    if (calendarHandleRef) {
+      (calendarHandleRef as React.RefObject<CalendarHandle | null>).current = {
+        updateSize: () => calendarRef.current?.getApi().updateSize(),
+      };
+    }
+    return () => {
+      if (calendarHandleRef) {
+        (calendarHandleRef as React.RefObject<CalendarHandle | null>).current = null;
+      }
+    };
+  }, [calendarHandleRef]);
 
   const events = entries.map((calEntry) => {
     // FullCalendar treats end dates as exclusive when allDay is true
@@ -79,12 +104,33 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
 
   const handleEventClick = useCallback(
     (clickInfo: EventClickArg) => {
-      clickInfo.jsEvent.preventDefault();
+      const target = clickInfo.jsEvent.target as HTMLElement;
       const entry = clickInfo.event.extendedProps.entry as BasesEntry;
       const isModEvent = clickInfo.jsEvent.ctrlKey || clickInfo.jsEvent.metaKey;
+
+      // Let interactive elements inside the event handle the click instead of opening the note
+      const clickedTag = target.closest("a.tag");
+      if (clickedTag) {
+        return;
+      }
+
+      const clickedLink = target.closest(".internal-link") as HTMLElement | null;
+      if (clickedLink) {
+        return;
+      }
+
+      const clickedExternal = target.closest("a.external-link") as
+        | HTMLAnchorElement
+        | undefined;
+      if (clickedExternal?.href) {
+        return;
+      }
+
+      // Default: open the event's note
+      clickInfo.jsEvent.preventDefault();
       onEntryClick(entry, isModEvent);
     },
-    [onEntryClick],
+    [app, onEntryClick],
   );
 
   const handleEventMouseEnter = useCallback(
@@ -95,7 +141,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         app.workspace.trigger("hover-link", {
           event: mouseEnterInfo.jsEvent,
           source: "bases",
-          hoverParent: app.renderContext,
+          hoverParent: hoverParentRef.current,
           targetEl: mouseEnterInfo.el,
           linktext: entry.file.path,
         });
@@ -103,7 +149,6 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
 
       const contextMenuHandler = (evt: Event) => {
         evt.preventDefault();
-        // Create minimal event object for compatibility
         const syntheticEvent = {
           nativeEvent: evt as MouseEvent,
           currentTarget: mouseEnterInfo.el,

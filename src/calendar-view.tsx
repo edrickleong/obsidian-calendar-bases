@@ -8,9 +8,9 @@ import {
   parsePropertyId,
   QueryController,
 } from "obsidian";
-import { StrictMode } from "react";
+import React, { StrictMode } from "react";
 import { createRoot, Root } from "react-dom/client";
-import { CalendarReactView } from "./CalendarReactView";
+import { CalendarHandle, CalendarReactView } from "./CalendarReactView";
 import { AppContext } from "./context";
 
 export const CalendarViewType = "calendar";
@@ -26,6 +26,7 @@ export class CalendarView extends BasesView {
   scrollEl: HTMLElement;
   containerEl: HTMLElement;
   root: Root | null = null;
+  calendarHandleRef = React.createRef<CalendarHandle | null>();
 
   // Internal rendering data
   private entries: CalendarEntry[] = [];
@@ -55,8 +56,8 @@ export class CalendarView extends BasesView {
   }
 
   onResize(): void {
-    // TODO: Find a better way to handle resizing
-    this.updateCalendar();
+    // Tell FullCalendar to recalculate dimensions (e.g. after tab switch)
+    this.calendarHandleRef.current?.updateSize();
   }
 
   public focus(): void {
@@ -144,6 +145,7 @@ export class CalendarView extends BasesView {
               this.updateEntryDates(entry, newStart, newEnd)
             }
             editable={this.isEditable()}
+            calendarHandleRef={this.calendarHandleRef}
           />
         </AppContext.Provider>
       </StrictMode>,
