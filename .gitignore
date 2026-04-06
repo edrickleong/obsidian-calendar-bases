@@ -24,3 +24,6 @@ data.json
 # Exclude Obsidian test vault plugin
 test-vault/.obsidian/plugins/calendar-bases
 test-vault/.obsidian/workspace.json
+
+# Screenshot test output
+test-screenshots
