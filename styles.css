@@ -4,7 +4,6 @@ body {
   --calendar-hover-color: var(--background-modifier-hover);
 
   --calendar-selected-color: var(--interactive-accent);
-  --fc-border-color: var(--background-modifier-border);
   --fc-highlight-color: var(--background-modifier-hover);
 }
 
@@ -17,180 +16,6 @@ body {
   font-size: var(--font-ui-medium);
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
- * Calendar view — embedded preflight
- *
- * When the calendar is embedded inside a markdown note the FullCalendar
- * `<table>` sits inside `.markdown-rendered`, so Obsidian's generic table
- * styles (and community-theme table styles) leak in and break the calendar
- * layout.
- *
- * The preflight uses `:where()` for element selectors so they contribute
- * 0 specificity — this means the calendar appearance styles declared later
- * (in `.bases-calendar-container`) automatically win by source order without
- * needing a separate re-application layer.
- *
- * Every override includes a comment explaining *which* upstream rule it
- * counters and *why* the override is needed.
- * ──────────────────────────────────────────────────────────────────────────── */
-.markdown-rendered .bases-calendar-container {
-
-  /* ── table ──────────────────────────────────────────────────────────────
-   * `.markdown-rendered table` adds block margins that shift the calendar.
-   * `.cm-html-embed table, .markdown-rendered table` sets border-collapse
-   *  and line-height intended for data tables, not for FullCalendar's grid.
-   * Minimal also sets `width: var(--table-width)` (resolves to `auto`)
-   *  which shrinks a `table-layout: fixed` table to its content instead
-   *  of filling the container. We force `width: 100%` to match FC's own
-   *  default behaviour.
-   *
-   * Inner FC tables (fc-col-header, fc-scrollgrid-sync-table) use
-   * border-collapse: collapse so adjacent 1px borders merge into a single
-   * line. The outer fc-scrollgrid uses separate (set explicitly below).
-   */
-  :where(table) {
-    margin: 0 !important;
-    border-collapse: collapse !important;
-    width: 100% !important;
-  }
-
-  /* ── th, td ─────────────────────────────────────────────────────────────
-   * `.markdown-rendered td/th` sets padding, border, vertical-align,
-   *  font-size, font-weight, color, min/max-width — all intended for
-   *  markdown data tables but harmful to FullCalendar cells.
-   *
-   * `.markdown-rendered thead > tr > th, .markdown-rendered tbody > tr > td`
-   *  sets overflow: hidden, white-space, text-overflow: ellipsis — this
-   *  clips absolutely-positioned multi-day event spans and breaks text
-   *  wrapping inside calendar cells.
-   *
-   * `.markdown-rendered td/th` also sets text-align: start, overriding
-   *  FullCalendar's text-align: center on header cells.
-   *
-   * Some themes (Baseline, Cupertino) override border-width/style on td
-   *  and th, removing cell borders that FullCalendar needs.
-   *
-   * Cupertino adds border-radius: 8px to th inside .markdown-rendered,
-   *  creating rounded header cells with visible gaps.
-   */
-  :where(td, th) {
-    padding: 0 !important;
-    overflow: visible !important;
-    white-space: normal !important;
-    text-overflow: clip !important;
-    border-style: solid !important;
-    border-color: var(--background-modifier-border) !important;
-    border-radius: 0 !important;
-    vertical-align: top !important;
-    font-size: inherit !important;
-    color: inherit !important;
-    min-width: 0 !important;
-    max-width: none !important;
-  }
-
-  /* ── th (header cells) ──────────────────────────────────────────────────
-   * `.markdown-rendered th` overrides font-weight to --table-header-weight
-   *  (typically 600) and text-align to start. FullCalendar headers need
-   *  center alignment and their own weight for day-of-week labels.
-   */
-  :where(th) {
-    text-align: center !important;
-    font-weight: inherit !important;
-  }
-
-  /* ── scrollgrid section ─────────────────────────────────────────────────
-   * `.markdown-rendered thead tr > th:first-child` sets border-left-width,
-   *  overriding FC's `.fc .fc-scrollgrid-section > *` border-left-width: 0,
-   *  which causes a doubled left border on the scrollgrid.
-   * The header section's child <td> must also have border-bottom: 0 because
-   *  the <th> cells inside already provide the bottom border — without this,
-   *  our `fc-theme-standard td { border-width: 1px }` doubles it.
-   */
-  .fc .fc-scrollgrid-section > * {
-    border-left-width: 0 !important;
-    border-top-width: 0 !important;
-    border-right-width: 0 !important;
-  }
-  .fc .fc-scrollgrid-section-header > * {
-    border-bottom-width: 0 !important;
-  }
-  /* Body section cell: inner day cells provide right + bottom borders,
-     so zeroing avoids doubling against the separate-collapse scrollgrid */
-  .fc .fc-scrollgrid-section:not(.fc-scrollgrid-section-header) > * {
-    border-bottom-width: 0 !important;
-  }
-
-  /* ── tbody ──────────────────────────────────────────────────────────────
-   * Some themes (Baseline, Cupertino) set a background-color on
-   * `.markdown-rendered tbody` for alternating-row styling, which tints
-   *  the entire calendar grid.
-   */
-  :where(tbody) {
-    background-color: transparent !important;
-  }
-
-  /* ── tr ─────────────────────────────────────────────────────────────────
-   * `.markdown-rendered tbody tr` and `.markdown-rendered tbody tr:nth-child(odd)`
-   *  set alternating row background colors for data tables. This creates
-   *  striped rows across the calendar grid.
-   */
-  :where(tbody tr) {
-    background-color: transparent !important;
-  }
-
-  /* ── td border widths ───────────────────────────────────────────────────
-   * `.markdown-rendered tbody tr:last-child > td` removes the bottom border
-   *  and `.markdown-rendered tbody tr > td:first-child/:last-child` removes
-   *  left/right borders for markdown table edge styling. This strips borders
-   *  from calendar day cells. Also Minimal theme sets all borders to 0.
-   *  We restore FullCalendar's expected 1px borders on all sides.
-   */
-  .fc-theme-standard td,
-  .fc-theme-standard th {
-    border-width: 1px !important;
-  }
-
-  /* ── scrollgrid outer border ────────────────────────────────────────────
-   * Minimal theme overrides border-color on .markdown-rendered table
-   *  to a dark colour (rgb(15,15,15)); we restore FC's expected colour.
-   * The outer scrollgrid uses border-collapse: separate (unlike inner
-   *  tables which use collapse) to keep its own border distinct.
-   */
-  .fc-theme-standard .fc-scrollgrid {
-    border-width: 1px !important;
-    border-style: solid !important;
-    border-color: var(--background-modifier-border) !important;
-    border-collapse: separate !important;
-  }
-
-  /* ── cursor ─────────────────────────────────────────────────────────────
-   * `.markdown-rendered` sets cursor: default on text content, which
-   *  overrides FullCalendar's auto cursor. Restore it so interactive
-   *  elements (drag handles, resize) work correctly.
-   */
-  .fc {
-    cursor: auto;
-  }
-
-  /* ── link colour ────────────────────────────────────────────────────────
-   * `.markdown-rendered a` overrides link colour. The day-number and
-   *  header-cell cushion are <a> tags, so they pick up the link colour
-   *  instead of the calendar's intended colours. Reset to inherit so
-   *  the calendar appearance styles below take effect.
-   */
-  :where(a) {
-    color: inherit !important;
-  }
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
- * Calendar view — appearance (single source of truth)
- *
- * These styles define how the calendar looks in BOTH standalone and embedded
- * contexts. They are declared after the embedded preflight so that in
- * embedded mode (where both blocks use !important and have comparable
- * specificity) these rules win by source order.
- * ──────────────────────────────────────────────────────────────────────────── */
 .bases-calendar-container {
   .fc {
     font-family: var(--font-interface);
@@ -271,6 +96,16 @@ body {
     padding: 2px 4px !important;
   }
 
+  .fc-daygrid-day-top {
+    position: relative;
+    min-height: 30px;
+    padding-left: 44px;
+  }
+
+  .fc-daygrid-day-events {
+    margin-top: 2px;
+  }
+
   a.fc-daygrid-day-number {
     cursor: default !important;
     text-decoration: none !important;
@@ -290,34 +125,68 @@ body {
   }
 
   .fc-event {
-    background-color: var(--background-secondary) !important;
-    border: none !important;
+    background-color: var(--background-secondary);
+    border: 1px solid transparent;
     border-radius: 3px !important;
     font-weight: 500 !important;
     cursor: pointer !important;
     margin-bottom: 2px !important;
-  }
-
-  /* Layer transparent hover color ON TOP of solid event background via
-     background-image (renders above background-color), keeping composite opaque
-     so daygrid cell borders don't show through */
-  .fc-event:hover {
-    background-image: linear-gradient(
-      var(--background-modifier-hover),
-      var(--background-modifier-hover)
-    ) !important;
-  }
-
-  /* Prevent FullCalendar's invisible focus/selected overlay (z-index: 3)
-     from blocking clicks on links inside events */
-  .fc-event:focus::before,
-  .fc-event-selected::before {
-    pointer-events: none;
+    overflow: hidden !important;
   }
 
   .fc-event-title-container {
     color: var(--text-normal) !important;
   }
+
+  .fc-scroll-harness {
+    padding: 0px !important;
+  }
+
+  .fc-theme-standard .fc-scrollgrid,
+  .fc-theme-standard .fc-scrollgrid-section > * {
+    border-color: var(--background-modifier-border) !important;
+  }
+}
+
+.bases-calendar-day-add {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  top: 4px;
+  inset-inline-start: 6px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  box-shadow: none;
+  z-index: 1;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    color 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.fc-daygrid-day:hover .bases-calendar-day-add,
+.bases-calendar-day-add:focus-visible {
+  opacity: 1;
+}
+
+.bases-calendar-day-add:hover,
+.bases-calendar-day-add:focus-visible {
+  color: var(--text-normal);
+  background: var(--background-secondary);
+  border-color: var(--background-modifier-border-hover);
+  outline: none;
 }
 
 .bases-calendar-event-content {
@@ -340,6 +209,6 @@ body {
 .bases-calendar-event-property {
   display: flex;
   flex-direction: column;
+  cursor: default;
   padding: 2px 0px;
 }
-

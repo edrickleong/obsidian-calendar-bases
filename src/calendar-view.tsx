@@ -5,13 +5,21 @@ import {
   BasesView,
   DateValue,
   Menu,
+  Notice,
   parsePropertyId,
   QueryController,
+  TFile,
 } from "obsidian";
-import React, { StrictMode } from "react";
+import { StrictMode } from "react";
 import { createRoot, Root } from "react-dom/client";
-import { CalendarHandle, CalendarReactView } from "./CalendarReactView";
+import { CalendarReactView } from "./CalendarReactView";
 import { AppContext } from "./context";
+import { createNoteForDate } from "./note-creation";
+import {
+  CalendarLocale,
+  resolveLocale,
+  translate,
+} from "./locales";
 
 export const CalendarViewType = "calendar";
 
@@ -26,13 +34,17 @@ export class CalendarView extends BasesView {
   scrollEl: HTMLElement;
   containerEl: HTMLElement;
   root: Root | null = null;
-  calendarHandleRef = React.createRef<CalendarHandle | null>();
 
   // Internal rendering data
   private entries: CalendarEntry[] = [];
   private startDateProp: BasesPropertyId | null = null;
   private endDateProp: BasesPropertyId | null = null;
   private weekStartDay: number = 1;
+  private locale: CalendarLocale = "auto";
+  private notesFolder = "";
+  private noteTemplate = "";
+  private colorProperty: BasesPropertyId | null = null;
+  private defaultNoteColor = "";
 
   constructor(controller: QueryController, scrollEl: HTMLElement) {
     super(controller);
@@ -56,8 +68,8 @@ export class CalendarView extends BasesView {
   }
 
   onResize(): void {
-    // Tell FullCalendar to recalculate dimensions (e.g. after tab switch)
-    this.calendarHandleRef.current?.updateSize();
+    // TODO: Find a better way to handle resizing
+    this.updateCalendar();
   }
 
   public focus(): void {
@@ -73,7 +85,12 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
+    this.colorProperty = this.config.getAsPropertyId("colorProperty");
     const weekStartDayValue = this.config.get("weekStartDay") as string;
+    this.locale = (this.config.get("locale") as CalendarLocale) || "auto";
+    this.notesFolder = ((this.config.get("notesFolder") as string) || "").trim();
+    this.noteTemplate = ((this.config.get("noteTemplate") as string) || "").trim();
+    this.defaultNoteColor = ((this.config.get("defaultNoteColor") as string) || "").trim();
 
     const dayNameToNumber: Record<string, number> = {
       sunday: 0,
@@ -96,7 +113,7 @@ export class CalendarView extends BasesView {
       this.root = null;
       this.containerEl.empty();
       this.containerEl.createDiv("bases-calendar-empty").textContent =
-        "Configure a start date property to display entries";
+        translate(this.locale, "configureStartDate");
       return;
     }
 
@@ -129,7 +146,10 @@ export class CalendarView extends BasesView {
           <CalendarReactView
             entries={this.entries}
             weekStartDay={this.weekStartDay}
+            locale={resolveLocale(this.locale)}
             properties={this.config.getOrder() || []}
+            colorProperty={this.colorProperty}
+            defaultNoteColor={this.defaultNoteColor}
             onEntryClick={(entry, isModEvent) => {
               void this.app.workspace.openLinkText(
                 entry.file.path,
@@ -144,12 +164,22 @@ export class CalendarView extends BasesView {
             onEventDrop={(entry, newStart, newEnd) =>
               this.updateEntryDates(entry, newStart, newEnd)
             }
+            onAddNote={(date) => void this.createNote(date)}
+            addNoteEnabled={this.canCreateNotes()}
             editable={this.isEditable()}
-            calendarHandleRef={this.calendarHandleRef}
           />
         </AppContext.Provider>
       </StrictMode>,
     );
+  }
+
+  private canCreateNotes(): boolean {
+    if (!this.startDateProp) {
+      return false;
+    }
+
+    const startDateProperty = parsePropertyId(this.startDateProp);
+    return startDateProperty.type === "note";
   }
 
   private isEditable(): boolean {
@@ -190,11 +220,34 @@ export class CalendarView extends BasesView {
     menu.addItem((item) =>
       item
         .setSection("danger")
-        .setTitle("Delete file")
+        .setTitle(translate(this.locale, "deleteFile"))
         .setIcon("lucide-trash-2")
         .setWarning(true)
         .onClick(() => this.app.fileManager.promptForDeletion(file)),
     );
+  }
+
+  private async createNote(date: Date): Promise<void> {
+    if (!this.startDateProp || !this.canCreateNotes()) {
+      return;
+    }
+
+    if (!this.noteTemplate) {
+      new Notice(translate(this.locale, "createNoteNeedsTemplate"));
+      return;
+    }
+
+    await createNoteForDate(this.app, {
+      folderPath: this.notesFolder,
+      templatePath: this.noteTemplate,
+      date,
+      startDateProp: this.startDateProp,
+      createNoteFailedMessage: translate(this.locale, "createNoteFailed"),
+      createNoteNeedsTemplaterMessage: translate(
+        this.locale,
+        "createNoteNeedsTemplater",
+      ),
+    });
   }
 
   private async updateEntryDates(
@@ -250,41 +303,77 @@ export class CalendarView extends BasesView {
   static getViewOptions(): BasesAllOptions[] {
     return [
       {
-        displayName: "Date properties",
+        displayName: translate("auto", "dateProperties"),
         type: "group",
         items: [
           {
-            displayName: "Start date",
+            displayName: translate("auto", "startDate"),
             type: "property",
             key: "startDate",
             placeholder: "Property",
           },
           {
-            displayName: "End date (optional)",
+            displayName: translate("auto", "endDate"),
             type: "property",
             key: "endDate",
+            placeholder: "Property",
+          },
+          {
+            displayName: translate("auto", "colorProperty"),
+            type: "property",
+            key: "colorProperty",
             placeholder: "Property",
           },
         ],
       },
       {
-        displayName: "Calendar options",
+        displayName: translate("auto", "calendarOptions"),
         type: "group",
         items: [
           {
-            displayName: "Week starts on",
+            displayName: translate("auto", "locale"),
+            type: "dropdown",
+            key: "locale",
+            default: "auto",
+            options: {
+              auto: translate("auto", "systemDefault"),
+              en: translate("auto", "english"),
+              ru: translate("auto", "russian"),
+            },
+          },
+          {
+            displayName: translate("auto", "weekStartsOn"),
             type: "dropdown",
             key: "weekStartDay",
             default: "monday",
             options: {
-              sunday: "Sunday",
-              monday: "Monday",
-              tuesday: "Tuesday",
-              wednesday: "Wednesday",
-              thursday: "Thursday",
-              friday: "Friday",
-              saturday: "Saturday",
+              sunday: translate("auto", "sunday"),
+              monday: translate("auto", "monday"),
+              tuesday: translate("auto", "tuesday"),
+              wednesday: translate("auto", "wednesday"),
+              thursday: translate("auto", "thursday"),
+              friday: translate("auto", "friday"),
+              saturday: translate("auto", "saturday"),
             },
+          },
+          {
+            displayName: translate("auto", "notesFolder"),
+            type: "folder",
+            key: "notesFolder",
+            placeholder: "Daily notes/Calendar",
+          },
+          {
+            displayName: translate("auto", "noteTemplate"),
+            type: "file",
+            key: "noteTemplate",
+            placeholder: "Templates/Daily note.md",
+            filter: (file: TFile) => file.extension === "md",
+          },
+          {
+            displayName: translate("auto", "defaultNoteColor"),
+            type: "text",
+            key: "defaultNoteColor",
+            placeholder: "#7f56d9",
           },
         ],
       },

@@ -4,22 +4,22 @@ import type {
   EventContentArg,
   EventDropArg,
 } from "@fullcalendar/core";
+import allLocales from "@fullcalendar/core/locales-all";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import { BasesEntry, BasesPropertyId, DateValue, Value } from "obsidian";
-import React, { useCallback, useEffect, useRef } from "react";
-
+import React, { useCallback, useRef } from "react";
 import { useApp } from "./hooks";
-
-export interface CalendarHandle {
-  updateSize(): void;
-}
+import { formatTemplate, ResolvedCalendarLocale, translate } from "./locales";
 
 interface CalendarReactViewProps {
   entries: CalendarEntry[];
   weekStartDay: number;
+  locale: ResolvedCalendarLocale;
   properties: BasesPropertyId[];
+  colorProperty: BasesPropertyId | null;
+  defaultNoteColor: string;
   onEntryClick: (entry: BasesEntry, isModEvent: boolean) => void;
   onEntryContextMenu: (evt: React.MouseEvent, entry: BasesEntry) => void;
   onEventDrop?: (
@@ -27,40 +27,27 @@ interface CalendarReactViewProps {
     newStart: Date,
     newEnd?: Date,
   ) => Promise<void>;
+  onAddNote: (date: Date) => void;
+  addNoteEnabled: boolean;
   editable: boolean;
-  calendarHandleRef?: React.RefObject<CalendarHandle | null>;
 }
 
 export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   entries,
   weekStartDay,
+  locale,
   properties,
+  colorProperty,
+  defaultNoteColor,
   onEntryClick,
   onEntryContextMenu,
   onEventDrop,
+  onAddNote,
+  addNoteEnabled,
   editable,
-  calendarHandleRef,
 }) => {
   const app = useApp();
   const calendarRef = useRef<FullCalendar>(null);
-  // Shared hover parent so Page Preview can manage popover lifecycle —
-  // when a new popover opens, the old one on the same parent is dismissed.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const hoverParentRef = useRef<{ hoverPopover: any }>({ hoverPopover: null });
-
-  // Expose updateSize to the parent view for resize/tab-switch handling
-  useEffect(() => {
-    if (calendarHandleRef) {
-      (calendarHandleRef as React.RefObject<CalendarHandle | null>).current = {
-        updateSize: () => calendarRef.current?.getApi().updateSize(),
-      };
-    }
-    return () => {
-      if (calendarHandleRef) {
-        (calendarHandleRef as React.RefObject<CalendarHandle | null>).current = null;
-      }
-    };
-  }, [calendarHandleRef]);
 
   const events = entries.map((calEntry) => {
     // FullCalendar treats end dates as exclusive when allDay is true
@@ -89,11 +76,20 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       }
     }
 
+    const eventColor = resolveEventColor(
+      calEntry.entry,
+      colorProperty,
+      defaultNoteColor,
+    );
+
     return {
       id: calEntry.entry.file.path,
       title: calEntry.entry.file.basename,
       start: calEntry.startDate,
       end: adjustedEndDate,
+      backgroundColor: eventColor || undefined,
+      borderColor: eventColor || undefined,
+      textColor: eventColor ? getReadableTextColor(eventColor) : undefined,
       allDay: true,
       extendedProps: {
         entry: calEntry.entry,
@@ -104,72 +100,44 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
 
   const handleEventClick = useCallback(
     (clickInfo: EventClickArg) => {
-      const target = clickInfo.jsEvent.target as HTMLElement;
+      clickInfo.jsEvent.preventDefault();
       const entry = clickInfo.event.extendedProps.entry as BasesEntry;
       const isModEvent = clickInfo.jsEvent.ctrlKey || clickInfo.jsEvent.metaKey;
-
-      // Let interactive elements inside the event handle the click instead of opening the note
-      const clickedTag = target.closest("a.tag");
-      if (clickedTag) {
-        return;
-      }
-
-      const clickedLink = target.closest(".internal-link") as HTMLElement | null;
-      if (clickedLink) {
-        return;
-      }
-
-      const clickedExternal = target.closest("a.external-link") as
-        | HTMLAnchorElement
-        | undefined;
-      if (clickedExternal?.href) {
-        return;
-      }
-
-      // Default: open the event's note
-      clickInfo.jsEvent.preventDefault();
       onEntryClick(entry, isModEvent);
     },
-    [app, onEntryClick],
+    [onEntryClick],
   );
-
-  // Track contextmenu listeners per element to prevent duplicates across hover cycles
-  const contextMenuListenersRef = useRef(new WeakMap<HTMLElement, (evt: Event) => void>());
 
   const handleEventMouseEnter = useCallback(
     (mouseEnterInfo: { event: EventApi; el: HTMLElement; jsEvent: MouseEvent }) => {
       const entry = mouseEnterInfo.event.extendedProps.entry as BasesEntry;
-      const el = mouseEnterInfo.el;
 
       if (app) {
         app.workspace.trigger("hover-link", {
           event: mouseEnterInfo.jsEvent,
           source: "bases",
-          hoverParent: hoverParentRef.current,
-          targetEl: el,
+          hoverParent: app.renderContext,
+          targetEl: mouseEnterInfo.el,
           linktext: entry.file.path,
         });
       }
 
-      // Remove previous contextmenu listener if one exists (prevents duplicates)
-      const prevHandler = contextMenuListenersRef.current.get(el);
-      if (prevHandler) {
-        el.removeEventListener("contextmenu", prevHandler);
-      }
-
       const contextMenuHandler = (evt: Event) => {
         evt.preventDefault();
+        // Create minimal event object for compatibility
         const syntheticEvent = {
           nativeEvent: evt as MouseEvent,
-          currentTarget: el,
+          currentTarget: mouseEnterInfo.el,
           target: evt.target as HTMLElement,
           preventDefault: () => evt.preventDefault(),
           stopPropagation: () => evt.stopPropagation(),
         } as unknown as React.MouseEvent;
         onEntryContextMenu(syntheticEvent, entry);
       };
-      contextMenuListenersRef.current.set(el, contextMenuHandler);
-      el.addEventListener("contextmenu", contextMenuHandler);
+
+      mouseEnterInfo.el.addEventListener("contextmenu", contextMenuHandler, {
+        once: true,
+      });
     },
     [app, onEntryContextMenu],
   );
@@ -213,6 +181,37 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       }
     },
     [onEventDrop],
+  );
+
+  const handleDayCellDidMount = useCallback(
+    (info: { el: HTMLElement; date: Date }) => {
+      if (!addNoteEnabled) {
+        return;
+      }
+
+      const dayTop = info.el.querySelector(".fc-daygrid-day-top");
+      if (!(dayTop instanceof HTMLElement)) {
+        return;
+      }
+
+      if (dayTop.querySelector(".bases-calendar-day-add")) {
+        return;
+      }
+
+      const addButton = document.createElement("button");
+      const addTooltip = translate(locale, "createNoteTooltip")
+      addButton.type = "button";
+      addButton.className = "bases-calendar-day-add";
+      addButton.setAttribute("aria-label", addTooltip);
+      addButton.textContent = "+";
+      addButton.addEventListener("click", (evt) => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        onAddNote(info.date);
+      });
+      dayTop.appendChild(addButton);
+    },
+    [addNoteEnabled, locale, onAddNote],
   );
 
   const hasNonEmptyValue = useCallback((value: Value): boolean => {
@@ -325,6 +324,8 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
     <FullCalendar
       ref={calendarRef}
       plugins={[dayGridPlugin, interactionPlugin]}
+      locales={allLocales}
+      locale={locale}
       initialView="dayGridMonth"
       firstDay={weekStartDay}
       headerToolbar={{
@@ -332,11 +333,18 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         center: "title",
         right: "prev,today,next",
       }}
+      titleFormat={(arg: { start: { year: number; month: number } }) =>
+        formatMonthTitle(
+          new Date(arg.start.year, arg.start.month, 1),
+          locale,
+        )
+      }
       buttonText={{
-        today: "Today",
+        today: translate(locale, "today"),
       }}
       navLinks={false}
       events={events}
+      dayCellDidMount={handleDayCellDidMount}
       eventContent={renderEventContent}
       eventClick={handleEventClick}
       eventMouseEnter={handleEventMouseEnter}
@@ -362,4 +370,69 @@ function tryGetValue(entry: BasesEntry, propId: BasesPropertyId): Value | null {
   } catch {
     return null;
   }
+}
+
+function resolveEventColor(
+  entry: BasesEntry,
+  colorProperty: BasesPropertyId | null,
+  defaultNoteColor: string,
+): string {
+  const fromProperty = colorProperty ? tryGetValue(entry, colorProperty) : null;
+  const colorValue = fromProperty?.toString().trim() || defaultNoteColor.trim();
+  return isCssColor(colorValue) ? colorValue : "";
+}
+
+function isCssColor(value: string): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const tester = document.createElement("span");
+  tester.style.color = "";
+  tester.style.color = value;
+  return tester.style.color !== "";
+}
+
+function getReadableTextColor(backgroundColor: string): string {
+  const normalized = normalizeColor(backgroundColor);
+  if (!normalized) {
+    return "var(--text-normal)";
+  }
+
+  const { r, g, b } = normalized;
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness >= 160 ? "#1f1f1f" : "#ffffff";
+}
+
+function normalizeColor(
+  color: string,
+): { r: number; g: number; b: number } | null {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return null;
+  }
+
+  context.fillStyle = color;
+  const computed = context.fillStyle;
+  const hexMatch = /^#([0-9a-f]{6})$/i.exec(computed);
+  if (!hexMatch) {
+    return null;
+  }
+
+  const hex = hexMatch[1];
+  return {
+    r: Number.parseInt(hex.slice(0, 2), 16),
+    g: Number.parseInt(hex.slice(2, 4), 16),
+    b: Number.parseInt(hex.slice(4, 6), 16),
+  };
+}
+
+function formatMonthTitle(date: Date, locale: ResolvedCalendarLocale): string {
+  const month = date.toLocaleString(locale, { month: "long" });
+  const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+  return `${capitalizedMonth} ${date.getFullYear()}`;
 }
