@@ -32,6 +32,7 @@ export class CalendarView extends BasesView {
   private startDateProp: BasesPropertyId | null = null;
   private endDateProp: BasesPropertyId | null = null;
   private weekStartDay: number = 1;
+  private imageProp: BasesPropertyId | null = null;
 
   constructor(controller: QueryController, scrollEl: HTMLElement) {
     super(controller);
@@ -72,6 +73,7 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
+    this.imageProp = this.config.getAsPropertyId("imageProperty");
     const weekStartDayValue = this.config.get("weekStartDay") as string;
 
     const dayNameToNumber: Record<string, number> = {
@@ -129,6 +131,7 @@ export class CalendarView extends BasesView {
             entries={this.entries}
             weekStartDay={this.weekStartDay}
             properties={this.config.getOrder() || []}
+            imageProperty={this.imageProp ?? undefined}
             onEntryClick={(entry, isModEvent) => {
               void this.app.workspace.openLinkText(
                 entry.file.path,
@@ -283,6 +286,12 @@ export class CalendarView extends BasesView {
               friday: "Friday",
               saturday: "Saturday",
             },
+          },
+          {
+            displayName: "Image property (optional)",
+            type: "property",
+            key: "imageProperty",
+            placeholder: "Property",
           },
         ],
       },
