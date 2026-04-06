@@ -133,35 +133,43 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
     [app, onEntryClick],
   );
 
+  // Track contextmenu listeners per element to prevent duplicates across hover cycles
+  const contextMenuListenersRef = useRef(new WeakMap<HTMLElement, (evt: Event) => void>());
+
   const handleEventMouseEnter = useCallback(
     (mouseEnterInfo: { event: EventApi; el: HTMLElement; jsEvent: MouseEvent }) => {
       const entry = mouseEnterInfo.event.extendedProps.entry as BasesEntry;
+      const el = mouseEnterInfo.el;
 
       if (app) {
         app.workspace.trigger("hover-link", {
           event: mouseEnterInfo.jsEvent,
           source: "bases",
           hoverParent: hoverParentRef.current,
-          targetEl: mouseEnterInfo.el,
+          targetEl: el,
           linktext: entry.file.path,
         });
+      }
+
+      // Remove previous contextmenu listener if one exists (prevents duplicates)
+      const prevHandler = contextMenuListenersRef.current.get(el);
+      if (prevHandler) {
+        el.removeEventListener("contextmenu", prevHandler);
       }
 
       const contextMenuHandler = (evt: Event) => {
         evt.preventDefault();
         const syntheticEvent = {
           nativeEvent: evt as MouseEvent,
-          currentTarget: mouseEnterInfo.el,
+          currentTarget: el,
           target: evt.target as HTMLElement,
           preventDefault: () => evt.preventDefault(),
           stopPropagation: () => evt.stopPropagation(),
         } as unknown as React.MouseEvent;
         onEntryContextMenu(syntheticEvent, entry);
       };
-
-      mouseEnterInfo.el.addEventListener("contextmenu", contextMenuHandler, {
-        once: true,
-      });
+      contextMenuListenersRef.current.set(el, contextMenuHandler);
+      el.addEventListener("contextmenu", contextMenuHandler);
     },
     [app, onEntryContextMenu],
   );
