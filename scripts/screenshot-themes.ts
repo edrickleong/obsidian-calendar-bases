@@ -22,6 +22,7 @@ const ROOT = resolve(import.meta.dirname, "..");
 const OUTPUT_DIR = join(ROOT, "test-screenshots");
 const EMBEDDED_NOTE = "Embedded Calendar Base.md";
 const STANDALONE_BASE = "Events.base";
+const COLOR_SCHEMES = ["light", "dark"] as const;
 
 function obsidian(command: string): string {
   return execSync(`obsidian ${command}`, {
@@ -42,13 +43,18 @@ function setTheme(theme: string): void {
   sleep(1000);
 }
 
+function setColorScheme(scheme: "light" | "dark"): void {
+  obsidian(
+    `eval code="app.changeTheme('${scheme === 'dark' ? 'obsidian' : 'moonstone'}'); 'ok';" vault="${VAULT}"`,
+  );
+  sleep(500);
+}
+
 function openFile(path: string): void {
   obsidian(`open path="${path}" vault="${VAULT}"`);
   sleep(2000);
-  // Verify the correct file is active before proceeding
   const active = obsidian(`eval code="app.workspace.getActiveFile()?.path" vault="${VAULT}"`);
   if (!active.includes(path.replace(/\.md$/, "").replace(/\.base$/, ""))) {
-    // Retry with longer wait
     sleep(2000);
   }
 }
@@ -68,34 +74,40 @@ function discoverThemes(): string[] {
 // ── Main ──────────────────────────────────────────────────────────────────
 
 const themes = ["", ...discoverThemes()]; // "" = default (no theme)
+const totalScreenshots = themes.length * COLOR_SCHEMES.length * 2;
 
 mkdirSync(OUTPUT_DIR, { recursive: true });
 
-console.log(`📸 Capturing screenshots for ${themes.length} theme(s)`);
+console.log(`📸 Capturing screenshots for ${themes.length} theme(s) × ${COLOR_SCHEMES.length} color scheme(s)`);
 console.log(`   Output: ${OUTPUT_DIR}\n`);
 
 for (const theme of themes) {
-  const label = theme || "default";
-  console.log(`── Theme: ${label} ──`);
-
+  const themeLabel = theme || "default";
   setTheme(theme);
 
-  // Standalone view (rendered first — simpler, loads faster)
-  openFile(STANDALONE_BASE);
-  const standalonePath = join(OUTPUT_DIR, `standalone-${label}.png`);
-  screenshot(standalonePath);
-  console.log(`  ✓ standalone → standalone-${label}.png`);
+  for (const scheme of COLOR_SCHEMES) {
+    console.log(`── Theme: ${themeLabel} (${scheme}) ──`);
 
-  // Embedded view (needs more time for the plugin to render inside the note)
-  openFile(EMBEDDED_NOTE);
-  sleep(2000); // extra wait for embedded base to render
-  const embeddedPath = join(OUTPUT_DIR, `embedded-${label}.png`);
-  screenshot(embeddedPath);
-  console.log(`  ✓ embedded  → embedded-${label}.png`);
+    setColorScheme(scheme);
+
+    // Standalone view (rendered first — simpler, loads faster)
+    openFile(STANDALONE_BASE);
+    const standalonePath = join(OUTPUT_DIR, `standalone-${themeLabel}-${scheme}.png`);
+    screenshot(standalonePath);
+    console.log(`  ✓ standalone → standalone-${themeLabel}-${scheme}.png`);
+
+    // Embedded view (needs more time for the plugin to render inside the note)
+    openFile(EMBEDDED_NOTE);
+    sleep(2000); // extra wait for embedded base to render
+    const embeddedPath = join(OUTPUT_DIR, `embedded-${themeLabel}-${scheme}.png`);
+    screenshot(embeddedPath);
+    console.log(`  ✓ embedded  → embedded-${themeLabel}-${scheme}.png`);
+  }
 }
 
-// Reset to default theme
+// Reset to default theme and light mode
 setTheme("");
+setColorScheme("dark");
 console.log(
-  `\n✅ Done — ${themes.length * 2} screenshots saved to test-screenshots/`,
+  `\n✅ Done — ${totalScreenshots} screenshots saved to test-screenshots/`,
 );

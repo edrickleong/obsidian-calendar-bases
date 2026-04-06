@@ -4,6 +4,7 @@ body {
   --calendar-hover-color: var(--background-modifier-hover);
 
   --calendar-selected-color: var(--interactive-accent);
+  --fc-border-color: var(--background-modifier-border);
   --fc-highlight-color: var(--background-modifier-hover);
 }
 
@@ -108,8 +109,14 @@ body {
   .fc .fc-scrollgrid-section > * {
     border-left-width: 0 !important;
     border-top-width: 0 !important;
+    border-right-width: 0 !important;
   }
   .fc .fc-scrollgrid-section-header > * {
+    border-bottom-width: 0 !important;
+  }
+  /* Body section cell: inner day cells provide right + bottom borders,
+     so zeroing avoids doubling against the separate-collapse scrollgrid */
+  .fc .fc-scrollgrid-section:not(.fc-scrollgrid-section-header) > * {
     border-bottom-width: 0 !important;
   }
 
@@ -291,6 +298,16 @@ body {
     margin-bottom: 2px !important;
   }
 
+  /* Layer transparent hover color ON TOP of solid event background via
+     background-image (renders above background-color), keeping composite opaque
+     so daygrid cell borders don't show through */
+  .fc-event:hover {
+    background-image: linear-gradient(
+      var(--background-modifier-hover),
+      var(--background-modifier-hover)
+    ) !important;
+  }
+
   .fc-event-title-container {
     color: var(--text-normal) !important;
   }
@@ -316,7 +333,6 @@ body {
 .bases-calendar-event-property {
   display: flex;
   flex-direction: column;
-  cursor: default;
   padding: 2px 0px;
 }
 

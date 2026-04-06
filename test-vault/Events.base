@@ -6,6 +6,9 @@ views:
     name: Calendar
     order:
       - file.name
+      - date
+      - endDate
+      - tags
     startDate: note.date
     endDate: note.endDate
     weekStartDay: monday
