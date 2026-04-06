@@ -82,6 +82,10 @@ body {
 
   .fc-daygrid-day {
     background-color: var(--background-primary) !important;
+    /* Override Obsidian's `.markdown-rendered tbody > tr > td { overflow: hidden }`
+       which clips FullCalendar's absolutely-positioned multi-day event spans
+       when the calendar is embedded in a markdown note. */
+    overflow: visible !important;
   }
 
   .fc-highlight {

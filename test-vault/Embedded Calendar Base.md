@@ -1,4 +1,4 @@
-# Hello
+# Embedded Calendar Base
 ```base
 views:
   - type: calendar
