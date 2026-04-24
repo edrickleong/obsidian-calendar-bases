@@ -16,7 +16,7 @@ export default class ObsidianCalendarPlugin extends Plugin {
       icon: "lucide-calendar",
       factory: (controller, containerEl) =>
         new CalendarView(controller, containerEl),
-      options: () => CalendarView.getViewOptions(),
+      options: () => CalendarView.getViewOptions(), 
     });
   }
 

@@ -66,7 +66,13 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
     // FullCalendar treats end dates as exclusive when allDay is true
     // We need to add one day to the end date to make it inclusive
     // But if start and end are the same day, we don't set an end date (single day event)
-    let adjustedEndDate = calEntry.endDate;
+    let adjustedEndDate;
+    if (!calEntry.endDate) {
+      adjustedEndDate = new Date();
+      adjustedEndDate.setDate(adjustedEndDate.getDate() + 1); //idk why but i have to increase today by one 
+    } else {
+      adjustedEndDate = new Date(calEntry.endDate);
+    }
     if (calEntry.endDate) {
       const startDateOnly = new Date(
         calEntry.startDate.getFullYear(),
@@ -84,7 +90,6 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         adjustedEndDate = undefined;
       } else {
         // Multi-day event - add one day to make end date inclusive
-        adjustedEndDate = new Date(calEntry.endDate);
         adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
       }
     }
@@ -174,46 +179,46 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
     [app, onEntryContextMenu],
   );
 
-  const handleEventDrop = useCallback(
-    async (dropInfo: EventDropArg) => {
-      if (!onEventDrop) {
-        dropInfo.revert();
-        return;
-      }
+  // const handleEventDrop = useCallback(
+  //   async (dropInfo: EventDropArg) => {
+  //     if (!onEventDrop) {
+  //       dropInfo.revert();
+  //       return;
+  //     }
 
-      const entry = dropInfo.event.extendedProps.entry as BasesEntry;
-      const originalEndDate = dropInfo.event.extendedProps.originalEndDate as
-        | Date
-        | undefined;
-      const newStart = dropInfo.event.start;
-      const newEnd = dropInfo.event.end;
+  //     const entry = dropInfo.event.extendedProps.entry as BasesEntry;
+  //     const originalEndDate = dropInfo.event.extendedProps.originalEndDate as
+  //       | Date
+  //       | undefined;
+  //     const newStart = dropInfo.event.start;
+  //     const newEnd = dropInfo.event.end;
 
-      if (!newStart) {
-        dropInfo.revert();
-        return;
-      }
+  //     if (!newStart) {
+  //       dropInfo.revert();
+  //       return;
+  //     }
 
-      // Calculate the actual end date to save
-      let actualEndDate: Date | undefined = undefined;
-      if (originalEndDate) {
-        if (newEnd) {
-          // FullCalendar gave us an adjusted end date, we need to subtract one day to get the actual end date
-          actualEndDate = new Date(newEnd);
-          actualEndDate.setDate(actualEndDate.getDate() - 1);
-        } else {
-          // Single day event - use the start date as the end date
-          actualEndDate = new Date(newStart);
-        }
-      }
+  //     // Calculate the actual end date to save
+  //     let actualEndDate: Date | undefined = undefined;
+  //     if (originalEndDate) {
+  //       if (newEnd) {
+  //         // FullCalendar gave us an adjusted end date, we need to subtract one day to get the actual end date
+  //         actualEndDate = new Date(newEnd);
+  //         actualEndDate.setDate(actualEndDate.getDate() - 1);
+  //       } else {
+  //         // Single day event - use the start date as the end date
+  //         actualEndDate = new Date(newStart);
+  //       }
+  //     }
 
-      try {
-        await onEventDrop(entry, newStart, actualEndDate);
-      } catch {
-        dropInfo.revert();
-      }
-    },
-    [onEventDrop],
-  );
+  //     try {
+  //       await onEventDrop(entry, newStart, actualEndDate);
+  //     } catch {
+  //       dropInfo.revert();
+  //     }
+  //   },
+  //   [onEventDrop],
+  // );
 
   const hasNonEmptyValue = useCallback((value: Value): boolean => {
     if (!value || !value.isTruthy()) return false;
@@ -340,12 +345,12 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       eventContent={renderEventContent}
       eventClick={handleEventClick}
       eventMouseEnter={handleEventMouseEnter}
-      eventDrop={(info) => void handleEventDrop(info)}
+      // eventDrop={(info) => void handleEventDrop(info)}
       height="auto"
       fixedWeekCount={true}
       fixedMirrorParent={document.body ?? undefined}
       eventDurationEditable={false}
-      editable={editable}
+      editable={false} //changed
     />
   );
 };
