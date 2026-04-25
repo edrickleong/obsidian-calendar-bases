@@ -104,6 +104,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         entry: calEntry.entry,
         originalEndDate: calEntry.endDate, // Keep track of original end date for drag operations
       },
+      backgroundColor: calEntry.backgroundColor,
     };
   });
 
@@ -279,6 +280,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   const renderEventContent = useCallback(
     (eventInfo: EventContentArg) => {
       if (!app) return null;
+      
 
       const entry = eventInfo.event.extendedProps.entry as BasesEntry;
       const validProperties: { propertyId: BasesPropertyId; value: Value }[] =
@@ -294,7 +296,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         const firstProperty = validProperties[0];
         const remainingProperties = validProperties.slice(1);
 
-        return (
+        return ( //place to change backgroundColor might be here?
           <div className="bases-calendar-event-content">
             <div className="bases-calendar-event-title">
               <PropertyValue value={firstProperty.value} />
@@ -323,7 +325,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         );
       }
     },
-    [properties, app, hasNonEmptyValue],
+    [properties, app, hasNonEmptyValue, ],
   );
 
   return (
@@ -359,6 +361,7 @@ interface CalendarEntry {
   entry: BasesEntry;
   startDate: Date;
   endDate?: Date;
+  backgroundColor?: string;
 }
 
 function tryGetValue(entry: BasesEntry, propId: BasesPropertyId): Value | null {

@@ -290,7 +290,7 @@ body {
   }
 
   .fc-event {
-    background-color: #fcc5ff !important; /*hard coded cause im tired*/
+    /* background-color: #fcc5ff !important; hard coded cause im tired */
     border: none !important;
     border-radius: 0px !important;
     font-weight: 500 !important;
